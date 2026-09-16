@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>What's My IP Address?</title>
+
+  <!-- Leaflet map -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIINfQ3d0s8eZ1FqzKQ2w0e8FQx4M3nYx0M="
+    crossorigin=""
+  />
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #ffffff;
+      background: #f1f2f3;
+    }
+
+    /* ---------- Header ---------- */
+    .top-header {
+      height: 143px;
+      background: #f4f4f4;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 35px;
+      overflow: hidden;
+    }
+
+    .logo {
+      width: 230px;
+      min-width: 230px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      position: relative;
+    }
+
+    .globe {
+      width: 78px;
+      height: 105px;
+      border: 4px solid #54a82c;
+      border-radius: 50%;
+      position: relative;
+      transform: rotate(-12deg);
+      margin-right: 7px;
+      background:
+        radial-gradient(circle at 60% 35%, #ffffff 0 10%, transparent 11%),
+        linear-gradient(145deg, #0d8fc5 0 28%, #ffffff 29% 40%, #008ec5 41% 63%, #ffffff 64% 73%, #007bb7 74%);
+      box-shadow: inset 5px 0 0 rgba(0, 110, 180, .25);
+    }
+
+    .globe::before {
+      content: "";
+      position: absolute;
+      width: 35px;
+      height: 48px;
+      border-radius: 50%;
+      border: 5px solid #5aae31;
+      left: 19px;
+      top: 21px;
+      opacity: .9;
+    }
+
+    .pin {
+      position: absolute;
+      width: 29px;
+      height: 29px;
+      background: #f36b35;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      left: 44px;
+      top: 11px;
+      border: 4px solid white;
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+    }
+
+    .pin::after {
+      content: "";
+      width: 9px;
+      height: 9px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      left: 6px;
+      top: 6px;
+    }
+
+    .logo-text {
+      line-height: .95;
+      font-size: 25px;
+      font-weight: 700;
+      letter-spacing: -1.2px;
+    }
+
+    .logo-text .green { color: #54a82c; }
+    .logo-text .blue { color: #008cc4; }
+    .logo-text small {
+      display: block;
+      text-align: right;
+      color: #008cc4;
+      font-size: 13px;
+      letter-spacing: 0;
+      margin-top: 3px;
+    }
+
+    .search-area {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex: 1;
+      max-width: 520px;
+    }
+
+    .search-input {
+      height: 45px;
+      width: 160px;
+      border: 2px solid #333;
+      padding: 0 7px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-button {
+      margin-left: 185px;
+      height: 45px;
+      min-width: 135px;
+      border: 0;
+      background: #008bc1;
+      color: #fff;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .search-button:hover {
+      background: #0075a5;
+    }
+
+    .top-links {
+      display: flex;
+      align-items: center;
+      gap: 27px;
+      white-space: nowrap;
+      color: #096da9;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .top-links a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .nav {
+      height: 53px;
+      background: #fff;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border-bottom: 1px solid #ddd;
+    }
+
+    .nav a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 13px;
+      border-right: 1px solid #e4e4e4;
+    }
+
+    .nav a:hover {
+      background: #f2f2f2;
+    }
+
+    .arrow {
+      font-size: 9px;
+      margin-left: 4px;
+    }
+
+    /* ---------- Ad placeholder ---------- */
+    .ad-strip {
+      width: 320px;
+      height: 28px;
+      margin: 0 auto;
+      background: linear-gradient(90deg, #e21c2a, #fff, #e21c2a);
+      color: #fff;
+      font-size: 10px;
+      font-weight: bold;
+      text-align: center;
+      line-height: 28px;
+      overflow: hidden;
+    }
+
+    /* ---------- Main panel ---------- */
+    .main {
+      max-width: 1060px;
+      margin: 32px auto 30px;
+      background: #244f79;
+      min-height: 451px;
+      padding: 35px 60px;
+      display: grid;
+      grid-template-columns: 1fr 283px;
+      gap: 52px;
+    }
+
+    .content h3 {
+      margin: 0 0 11px;
+      font-size: 18px;
+      font-weight: normal;
+    }
+
+    .ip-box {
+      background: #2f608d;
+      min-height: 57px;
+      padding: 13px 20px;
+      margin-bottom: 0;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .ip-box strong {
+      color: #fff;
+    }
+
+    .question {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 23px;
+      height: 23px;
+      background: #078cc3;
+      border-radius: 50%;
+      font-size: 14px;
+      margin: 0 7px 0 4px;
+      vertical-align: middle;
+    }
+
+    .ip-value {
+      text-decoration: underline;
+      text-underline-offset: 4px;
+    }
+
+    .ip6 {
+      margin-bottom: 38px;
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+
+    .details h3 {
+      margin-bottom: 16px;
+    }
+
+    .info-box {
+      background: #2f608d;
+      min-height: 153px;
+      padding: 20px;
+      position: relative;
+    }
+
+    .info-box::after {
+      content: "";
+      position: absolute;
+      right: -23px;
+      top: 32px;
+      border-top: 22px solid transparent;
+      border-bottom: 22px solid transparent;
+      border-left: 23px solid #2f608d;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .row .label {
+      color: #fff;
+    }
+
+    .row .value {
+      font-weight: normal;
+    }
+
+    .warning {
+      text-align: center;
+      font-size: 17px;
+      margin: 0 0 26px;
+    }
+
+    .hide-button {
+      width: 100%;
+      min-height: 96px;
+      background: #ff2638;
+      color: #fff;
+      border: 0;
+      font-size: 19px;
+      font-weight: bold;
+      line-height: 1.35;
+      cursor: pointer;
+      padding: 10px 20px;
+    }
+
+    .hide-button:hover {
+      background: #e91f30;
+    }
+
+    .shield {
+      display: inline-block;
+      margin-right: 12px;
+      font-size: 18px;
+    }
+
+    .complete-link {
+      display: block;
+      color: #6fc52c;
+      text-decoration: underline;
+      text-align: center;
+      margin-top: 17px;
+      font-size: 16px;
+    }
+
+    .map-column {
+      padding-top: 9px;
+    }
+
+    #map {
+      width: 283px;
+      height: 270px;
+      background: #9eb9ee;
+    }
+
+    .map-caption {
+      text-align: center;
+      margin-top: 22px;
+      font-size: 16px;
+    }
+
+    .update-link {
+      display: block;
+      text-align: center;
+      margin-top: 10px;
+      color: #72c62b;
+      text-decoration: underline;
+      font-size: 16px;
+    }
+
+    .status {
+      font-size: 13px;
+      opacity: .8;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .top-header {
+        height: auto;
+        min-height: 115px;
+        flex-wrap: wrap;
+        padding: 10px 20px;
+        gap: 15px;
+      }
+
+      .logo {
+        width: 200px;
+        min-width: 200px;
+      }
+
+      .top-links {
+        display: none;
+      }
+
+      .search-area {
+        max-width: none;
+      }
+
+      .search-button {
+        margin-left: 8px;
+      }
+
+      .main {
+        margin: 20px 15px;
+        padding: 30px;
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .nav {
+        grid-template-columns: repeat(3, 1fr);
+        height: auto;
+      }
+
+      .nav a {
+        min-height: 48px;
+      }
+
+      .search-input {
+        width: 150px;
+      }
+
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .main {
+        padding: 25px 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="top-header">
+    <div class="logo" aria-label="What's My IP Address">
+      <div class="globe">
+        <div class="pin"></div>
+      </div>
+      <div class="logo-text">
+        <span class="green">WhatIs</span><br>
+        <span class="blue">MyIPAddress</span>
+        <small>.com</small>
+      </div>
+    </div>
+
+    <form class="search-area" id="searchForm">
+      <input
+        class="search-input"
+        id="searchInput"
+        type="text"
+        placeholder="Enter Keywords or IP Address"
+      >
+      <button class="search-button" type="submit">⌕ Search</button>
+    </form>
+
+    <div class="top-links">
+      <a href="#">ABOUT</a>
+      <a href="#">PRESS</a>
+      <a href="#">BOOK</a>
+      <a href="#">PODCAST</a>
+      <a href="#">CONTACT</a>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <a href="#">MY IP</a>
+    <a href="#">IP LOOKUP</a>
+    <a href="#">HIDE MY IP</a>
+    <a href="#">VPNS <span class="arrow">▼</span></a>
+    <a href="#">TOOLS <span class="arrow">▼</span></a>
+    <a href="#">LEARN <span class="arrow">▼</span></a>
+  </nav>
+
+  <div class="ad-strip">ADVERTISEMENT</div>
+
+  <main class="main">
+
+    <section class="content">
+      <h3>My IP Address is:</h3>
+
+      <div class="ip-box">
+        IPv4:
+        <span class="question">?</span>
+        <span class="ip-value" id="ipv4">Loading...</span>
+      </div>
+
+      <div class="ip-box ip6">
+        IPv6:
+        <span class="question">?</span>
+        <strong id="ipv6">Not detected</strong>
+      </div>
+
+      <div class="details-grid">
+
+        <div class="details">
+          <h3>My IP Information:</h3>
+
+          <div class="info-box">
+            <div class="row">
+              <span class="label">ISP:</span>
+              <span class="value" id="isp">Loading...</span>
+            </div>
+            <div class="row">
+              <span class="label">City:</span>
+              <span class="value" id="city">Loading...</span>
+            </div>
+            <div class="row">
+              <span class="label">Region:</span>
+              <span class="value" id="region">Loading...</span>
+            </div>
+            <div class="row">
+              <span class="label">Country:</span>
+              <span class="value" id="country">Loading...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="details">
+          <div class="warning">Your location may be exposed!</div>
+
+          <button class="hide-button" onclick="alert('This demo button can be connected to your VPN/proxy service.')">
+            <span class="shield">⬟</span>
+            HIDE MY IP ADDRESS<br>NOW
+          </button>
+
+          <a href="#" class="complete-link">Show Complete IP Details</a>
+        </div>
+
+      </div>
+    </section>
+
+    <aside class="map-column">
+      <div id="map"></div>
+      <div class="map-caption">Location not accurate?</div>
+      <a href="#" class="update-link">Update My IP Location</a>
+      <div class="status" id="status"></div>
+    </aside>
+
+  </main>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin="">
+  </script>
+
+  <script>
+    let map;
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value || "Not available";
+    }
+
+    async function loadIPData() {
+      try {
+        // ipapi.co provides IP + basic geolocation information.
+        const response = await fetch("https://ipapi.co/json/");
+        if (!response.ok) throw new Error("Could not retrieve IP information.");
+
+        const data = await response.json();
+
+        setText("ipv4", data.ip);
+        setText("isp", data.org);
+        setText("city", data.city);
+        setText("region", data.region);
+        setText("country", data.country_name);
+
+        const lat = Number(data.latitude);
+        const lon = Number(data.longitude);
+
+        if (Number.isFinite(lat) && Number.isFinite(lon)) {
+          if (!map) {
+            map = L.map("map", {
+              zoomControl: true,
+              attributionControl: true
+            }).setView([lat, lon], 7);
+
+            L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+              maxZoom: 18,
+              attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+          } else {
+            map.setView([lat, lon], 7);
+          }
+
+          L.marker([lat, lon])
+            .addTo(map)
+            .bindPopup(
+              "<strong>" + (data.ip || "Your IP") + "</strong><br>" +
+              (data.city || "") + ", " + (data.region || "")
+            )
+            .openPopup();
+        }
+
+        setText("status", "IP information loaded.");
+      } catch (error) {
+        setText("ipv4", "Unable to detect");
+        setText("isp", "Unavailable");
+        setText("city", "Unavailable");
+        setText("region", "Unavailable");
+        setText("country", "Unavailable");
+        setText("status", "IP lookup service unavailable.");
+        console.error(error);
+      }
+    }
+
+    document.getElementById("searchForm").addEventListener("submit", function(event) {
+      event.preventDefault();
+
+      const value = document.getElementById("searchInput").value.trim();
+
+      if (!value) {
+        alert("Please enter a keyword or IP address.");
+        return;
+      }
+
+      // Demo behaviour. Replace this with your own IP lookup endpoint.
+      window.location.href = "?ip=" + encodeURIComponent(value);
+    });
+
+    loadIPData();
+  </script>
+
+</body>
+</html>
